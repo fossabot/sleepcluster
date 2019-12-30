@@ -16,5 +16,6 @@ class Standards(ABC):
 	def __str__(self):
 		return type(self).__name__
 		
+	@abstractmethod
 	def validateParameters():
 		raise NotImplementedError( "No validateParameters function implemented" )	
