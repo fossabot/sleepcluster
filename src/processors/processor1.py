@@ -53,14 +53,21 @@ class Processor1(processor.Processor):
 			
 			rmsEMG = self.mergeRMS(EMG1epoch, EMG2epoch)
 			
-			EEGentropy = dataLib.spectralEntropy(EEGepoch)
-			EMGentropy = max(dataLib.spectralEntropy(EMG1epoch), dataLib.spectralEntropy(EMG2epoch))
+			EEGentropy = dataLib.bandedSpectralEntropy(EEGepoch, EEG.resolution, self.parameters.BANDS)
+			EMG1entropy = dataLib.bandedSpectralEntropy(EMG1epoch, EMG1.resolution, self.parameters.BANDS)
+			EMG2entropy = dataLib.bandedSpectralEntropy(EMG2epoch, EMG2.resolution, self.parameters.BANDS)
+			EMGentropy = max(EMG1entropy, EMG2entropy)
 			
 			zerocross = dataLib.zeroCross(EEGepoch)
 			
 			EMGpercentile = self.mergePercentileMean(EMG1epoch, EMG2epoch, self.parameters.PERCENTILE)
 			EMGmean = self.mergeMean(EMG1epoch, EMG2epoch)
-			data.append([])
+			
+			data_row = [i]
+			for band in EEGbands:
+				data_row.append(band)
+			data_row + [rmsEMG, EEGentropy, EMGentropy, zerocross, EMGpercentile, EMGmean]
+			data.append(data_row)
 		np_data = np.array(data)
 		return {'headers': headers, 'data':np_data}
 	

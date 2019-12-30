@@ -1,9 +1,13 @@
 import numpy as np
 
 
-def normalize(data):
+def maxNormalize(data):
 	max = np.max(data)
 	return data / max
+	
+def probNormalize(data):
+	sum = np.sum(data)
+	return data / sum
 	
 def computeBands(data, resolution, bands):
 	fft_vals = np.square(np.fft.rfft(data))
@@ -24,7 +28,8 @@ def percentileMean(data, k):
 	index = (len(data)*k)//100
 	return np.mean(np.partition(data, index)[index:])
 		
-def spectralEntropy(data):
-		
-	
-	return
+def bandedSpectralEntropy(data, resolutions, bands):
+	dataBands = computeBands(data, resolution, bands)
+	normDataBands = probNormalize(dataBands)
+	entropy = np.sum(normDataBands*np.log(1/normDataBands))
+	return entropy

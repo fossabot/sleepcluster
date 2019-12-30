@@ -28,7 +28,7 @@ EMG average amplitude
 class Parameters1_1(standards.Parameters1):
 	
 	def __init__(self):
-		self.NORMALIZER = dataLib.normalize
+		self.NORMALIZER = dataLib.maxNormalize
 		self.EPOCH_SIZE = 5
 		self.PERCENTILE = 95
 		self.BANDS = [	(0, 4),
