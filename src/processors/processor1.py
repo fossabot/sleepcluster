@@ -34,63 +34,77 @@ class Processor1(processor.Processor):
 		self.parameters = parameters
 		pass
 		
-	def process(self, eeg=None, emg1=None, emg2=None):
+	def process(self, EEG=None, EMG1=None, EMG2=None):
 		headers = np.array([['Epoch','EEG PS(1-4)','EEG PS(5-9)','EEG PS(11-15)','EEG PS(16-40)',
 					'rmsEMG','T-F entropy EEG','T-F entropy EMG','ZeroCross EEG',
 					'EMG95%mean','EMGmean'
 					]])
-		eeg = eeg.process(normalize)
-		emg1 = emg1.process(normalize)
-		emg2 = emg2.process(normalize)
-		epoch_data = calculateEpochs(eeg=eeg,emg1=emg1,emg2=emg2)
+		data = []
+		EEG = eeg.process(self.normalize)
+		EMG1 = emg1.process(self.normalize)
+		EMG2 = emg2.process(self.normalize)
+		epoch_data = calculateEpochs(EEG=EEG,EMG1=EMG1,EMG2=EMG2)
 		num_epochs = min([epoch_data['eeg_epochs'], epoch_data['emg1_epochs'], epoch_data['emg2_epochs']])
 		for i in range(num_epochs):
-			eegepoch = eeg.getData(i*epoch_data['eeg_size'], k=(i+1)*epoch_data['eeg_size'])
-			emg1epoch = emg1.getData(i*epoch_data['emg1_size'], k=(i+1)*epoch_data['emg1_size'])
-			emg2epoch = emg2.getData(i*epoch_data['emg2_size'], k=(i+1)*epoch_data['emg2_size'])
+			EEGepoch = eeg.getData(i*epoch_data['EEG_size'], k=(i+1)*epoch_data['EEG_size'])
+			EMG1epoch = emg1.getData(i*epoch_data['EMG1_size'], k=(i+1)*epoch_data['EMG1_size'])
+			EMG2epoch = emg2.getData(i*epoch_data['EMG2_size'], k=(i+1)*epoch_data['EMG2_size'])
 			
-			# power spec
+			EEGbands = self.computeBands(EEGepoch, EEG.resolution, self.parameters.bands)
 			
-			emg1rms = rms(emg1, emg1.resolution * 10)
-			emg2rms = rms(emg2, emg2.resolution * 10)
-			rmsEMG = np.maximum(emg1rms, emg2rms)
+			rmsEMG = self.mergeRMS(EMG1epoch, EMG2epoch)
 			
 			# tf spectral entropy
 			
-			zerocross = ((eegepoch[:-1] * eegepoch[1:]) < 0).sum()
+			zerocross = self.zeroCross(EEGepoch)
 			
-			EMG1idx95 = (len(emg1epoch)*95)//100
-			EMG2idx95 = (len(emg2epoch)*95)//100
-			EMG95mean = np.mean(np.mean(np.partition(emg1poch,EMG1idx95)[EMG1idx95:]),
-								np.mean(np.partition(emg2epoch,EMG2idx95)[EMG2idx95:])))
-			EMGmean = np.mean((np.mean(emg1epoch),np.mean(emg2epoch))
+			EMGpercentile = self.mergePercentileMean(EMG1epoch, EMG2epoch, 95)
+			EMGmean = self.mergeMean(EMG1epoch, EMG2epoch)
+			data.append([])
 		np_data = np.array(data)
 		return {'headers': headers, 'data':np_data}
 		
-	def calculateEpochs(self, epoch_size=5, eeg=None, emg1=None, emg2=None):
-		epoch_data = {
-						'eeg_size': eeg.length * eeg.resolution,
-						'emg1_size': emg1.length * emg1.resolution,
-						'emg2_size': emg2.length * emg2.resolution
-					}
-		epoch_data['eeg_epochs'] = epoch_data['eeg_size'] // epoch_size
-		epoch_data['emg1_epochs'] = epoch_data['emg1_size'] // epoch_size
-		epoch_data['emg2_epochs'] = epoch_data['emg2_size'] // epoch_size
-		return epoch_data
-	
 	def normalize(self, data):
 		max = np.max(data)
 		return data / max
+	
+	def calculateEpochs(self, epoch_size=5, EEG=None, EMG1=None, EMG2=None):
+		epoch_data = {
+						'EEG_size': EEG.length * EEG.resolution,
+						'EMG1_size': EMG1.length * EMG1.resolution,
+						'EMG2_size': EMG2.length * EMG2.resolution
+					}
+		epoch_data['EEG_epochs'] = epoch_data['EEG_size'] // epoch_size
+		epoch_data['EMG1_epochs'] = epoch_data['EMG1_size'] // epoch_size
+		epoch_data['EMG2_epochs'] = epoch_data['EMG2_size'] // epoch_size
+		return epoch_data
 		
-	def rms(self, data, n):
-		rms = []
-		for i in range(len(data)):
-			start = i - n
-			end = i + n
-			if start < 0:
-				start = 0
-			if end >= len(data):
-				end = len(data)-1
-			window = data[start:end]
-			rms.append(np.sqrt(np.mean(window**2)))
-		return rms
+	def computeBands(self, data, resolution, bands):
+		fft_vals = np.square(np.fft.rfft(data))
+		fft_freq = np.fft.rfftfreq(len(data), resolution)
+		dataBands = []
+		for band in bands:
+			freq_ix = np.where((fft_freq >= eeg_bands[band][0]) & (fft_freq <= eeg_bands[band][1]))[0]
+			dataBands.append(np.mean(fft_vals[freq_ix]))
+		return dataBands
+		
+	def mergeRMS(self, d1, d2):
+		d1rms = rms(d1)
+		d2rms = rms(d2)
+		return np.maximum(d1rms, d2rms)
+		
+	def rms(self, data):
+		return np.sqrt(np.mean(data**2))
+	
+	def zeroCross(self, data):
+		return ((data[:-1] * data[1:]) < 0).sum()
+		
+	def mergePercentileMean(self, d1, d2, k):
+		return np.mean(self.percentileMean(d1, k), self.percentileMean(d2, k))
+	
+	def mergeMean(self, d1, d2):
+		return np.mean(np.mean(d1), np.mean(d2))
+		
+	def percentileMean(self, data, k):
+		index = (len(data)*k)//100
+		return np.mean(np.partition(data, index)[index:])
