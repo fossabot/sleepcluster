@@ -1,13 +1,13 @@
 from importlib.machinery import SourceFileLoader
-dataReader = SourceFileLoader("dataReader", "../baseclass/dataobjects/datareader.py").load_module()
+dataReader = SourceFileLoader("abstract_datareader", "./dataobjects/abstract_datareader.py").load_module()
 
 import numpy as np
 from scipy.io import loadmat
 
-import dataobject
+import dataobjects.dataobject as dataobject
 
 # A Data Importer (DataReader) plugin for .mat files exported by Spike2 v7
-class smrMAT(dataObject.DataReader):
+class smrMAT(dataReader.DataReader):
 	standard = ".mat files exported by Spike2 v7"
 	filetypes = [("MAT-files", "*.mat")]
 
@@ -30,10 +30,9 @@ class smrMAT(dataObject.DataReader):
 			if c == matfile[field][0][0][0][0]:
 				try:
 					data = np.absolute((matfile[field][0][0][8]).flatten())
-					indices = np.arange(data.size)
 					resolution = matfile[field][0][0][2][0][0]
 					length = matfile[field][0][0][7][0][0]
-					dataObject = dataobject.DataObject(name=c, data=data, indices=indices, resolution=resolution, length=length)
+					dataObject = dataobject.DataObject(name=c, data=data, resolution=resolution, length=length)
 				except Exception:
 					raise FileNotFoundError("An error occurred extracting from channel " + c)
 		if data.size == 0:
