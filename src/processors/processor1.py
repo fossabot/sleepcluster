@@ -1,8 +1,7 @@
-from importlib.machinery import SourceFileLoader
-processor = SourceFileLoader("processor", "./processors/abstract_processor.py").load_module()
-parameters = SourceFileLoader("processor", "./processors/abstract_processor.py").load_module()
-
 import numpy as np
+
+from lib import data as dataLib
+from processors import abstract_processor as processor
 
 '''
 EEG Power Spectrum
@@ -40,33 +39,30 @@ class Processor1(processor.Processor):
 					'EMG95%mean','EMGmean'
 					]])
 		data = []
-		EEG = eeg.process(self.normalize)
-		EMG1 = emg1.process(self.normalize)
-		EMG2 = emg2.process(self.normalize)
-		epoch_data = calculateEpochs(EEG=EEG,EMG1=EMG1,EMG2=EMG2)
+		EEG = eeg.process(self.parameters.NORMALIZER)
+		EMG1 = emg1.process(self.parameters.NORMALIZER)
+		EMG2 = emg2.process(self.parameters.NORMALIZER)
+		epoch_data = calculateEpochs(epoch_size=self.parameters.EPOCH_SIZE, EEG=EEG, EMG1=EMG1, EMG2=EMG2)
 		num_epochs = min([epoch_data['eeg_epochs'], epoch_data['emg1_epochs'], epoch_data['emg2_epochs']])
 		for i in range(num_epochs):
 			EEGepoch = eeg.getData(i*epoch_data['EEG_size'], k=(i+1)*epoch_data['EEG_size'])
 			EMG1epoch = emg1.getData(i*epoch_data['EMG1_size'], k=(i+1)*epoch_data['EMG1_size'])
 			EMG2epoch = emg2.getData(i*epoch_data['EMG2_size'], k=(i+1)*epoch_data['EMG2_size'])
 			
-			EEGbands = self.computeBands(EEGepoch, EEG.resolution, self.parameters.bands)
+			EEGbands = dataLib.computeBands(EEGepoch, EEG.resolution, self.parameters.BANDS)
 			
 			rmsEMG = self.mergeRMS(EMG1epoch, EMG2epoch)
 			
-			# tf spectral entropy
+			EEGentropy = dataLib.spectralEntropy(EEGepoch)
+			EMGentropy = max(dataLib.spectralEntropy(EMG1epoch), dataLib.spectralEntropy(EMG2epoch))
 			
-			zerocross = self.zeroCross(EEGepoch)
+			zerocross = dataLib.zeroCross(EEGepoch)
 			
-			EMGpercentile = self.mergePercentileMean(EMG1epoch, EMG2epoch, 95)
+			EMGpercentile = self.mergePercentileMean(EMG1epoch, EMG2epoch, self.parameters.PERCENTILE)
 			EMGmean = self.mergeMean(EMG1epoch, EMG2epoch)
 			data.append([])
 		np_data = np.array(data)
 		return {'headers': headers, 'data':np_data}
-		
-	def normalize(self, data):
-		max = np.max(data)
-		return data / max
 	
 	def calculateEpochs(self, epoch_size=5, EEG=None, EMG1=None, EMG2=None):
 		epoch_data = {
@@ -78,33 +74,14 @@ class Processor1(processor.Processor):
 		epoch_data['EMG1_epochs'] = epoch_data['EMG1_size'] // epoch_size
 		epoch_data['EMG2_epochs'] = epoch_data['EMG2_size'] // epoch_size
 		return epoch_data
-		
-	def computeBands(self, data, resolution, bands):
-		fft_vals = np.square(np.fft.rfft(data))
-		fft_freq = np.fft.rfftfreq(len(data), resolution)
-		dataBands = []
-		for band in bands:
-			freq_ix = np.where((fft_freq >= eeg_bands[band][0]) & (fft_freq <= eeg_bands[band][1]))[0]
-			dataBands.append(np.mean(fft_vals[freq_ix]))
-		return dataBands
-		
+
 	def mergeRMS(self, d1, d2):
-		d1rms = rms(d1)
-		d2rms = rms(d2)
+		d1rms = dataLib.rms(d1)
+		d2rms = dataLib.rms(d2)
 		return np.maximum(d1rms, d2rms)
-		
-	def rms(self, data):
-		return np.sqrt(np.mean(data**2))
 	
-	def zeroCross(self, data):
-		return ((data[:-1] * data[1:]) < 0).sum()
-		
 	def mergePercentileMean(self, d1, d2, k):
-		return np.mean(self.percentileMean(d1, k), self.percentileMean(d2, k))
+		return np.mean(dataLib.percentileMean(d1, k), dataLib.percentileMean(d2, k))
 	
 	def mergeMean(self, d1, d2):
 		return np.mean(np.mean(d1), np.mean(d2))
-		
-	def percentileMean(self, data, k):
-		index = (len(data)*k)//100
-		return np.mean(np.partition(data, index)[index:])

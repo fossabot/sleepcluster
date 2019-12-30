@@ -1,10 +1,8 @@
-from importlib.machinery import SourceFileLoader
-dataReader = SourceFileLoader("abstract_datareader", "./dataobjects/abstract_datareader.py").load_module()
-
 import numpy as np
 from scipy.io import loadmat
 
-import dataobjects.dataobject as dataobject
+from dataobjects import dataobject
+from dataobjects import abstract_datareader as dataReader
 
 # A Data Importer (DataReader) plugin for .mat files exported by Spike2 v7
 class smrMAT(dataReader.DataReader):
