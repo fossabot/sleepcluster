@@ -2,12 +2,16 @@ import numpy as np
 
 
 def maxNormalize(data):
-	max = np.max(data)
-	return data / max
+	return data / np.max(data)
 	
 def probNormalize(data):
-	sum = np.sum(data)
-	return data / sum
+	return data / np.sum(data)
+	
+def powerNormalize(data, a):
+	return np.sign(data) * np.power(np.absolute(data), a)
+	
+def logNormalize(data):
+	return maxNormalize(np.log(data))
 	
 def computeBands(data, resolution, bands):
 	fft_vals = np.square(np.fft.rfft(data))
