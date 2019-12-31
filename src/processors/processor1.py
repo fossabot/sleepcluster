@@ -3,30 +3,8 @@ import numpy as np
 from lib import data as dataLib
 from processors import abstract_processor as processor
 
-'''
-EEG Power Spectrum
-1-4
-5-9
-11-15
-16-40
 
-rms EMG for both channels
- - Normalized against a "baseline" for each channel
- - Summated into one channel
-
-Time-Frequency Balanced Spectral Entropy of EEG and EMG
- - Time windows? Longer windows for shorter frequencies
- - Max entropy between two EMG channels
-
-Zero Crossings on EEG
- - On the Moving Average
- - On absolute Zero
-
-EMG 95% mean amplitude on both
-EMG mean amplitude on both
-'''
-
-# A Processor plugin
+# A Processor plugin for the Parameters1-type SleepCluster Standard 
 class Processor1(processor.Processor):
 
 	def __init__(self, parameters):
@@ -70,6 +48,7 @@ class Processor1(processor.Processor):
 			data.append(data_row)
 		np_data = np.array(data)
 		return {'headers': headers, 'data':np_data}
+	
 	
 	def calculateEpochs(self, epoch_size=5, EEG=None, EMG1=None, EMG2=None):
 		epoch_data = {

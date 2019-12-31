@@ -25,6 +25,7 @@ EMG max amplitude
 EMG average amplitude
 '''
 
+# A Parameters1-type SleepCluster Standard 
 class Parameters1_1(standards.Parameters1):
 	
 	def __init__(self):
