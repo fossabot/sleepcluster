@@ -5,11 +5,12 @@ from abc import ABC, abstractmethod
 #	to a Cluster Algorithm plugin
 class Cluster(ABC):
 
-	@classmethod
 	def __init__(self, type=None):
 		self.type = None
 		
 	def __str__(self):
 		return type(self).__name__ + ": " + self.type
 
-	
+	@abstractmethod
+	def cluster(self, *args, **kwargs):
+		raise NotImplementedError( "No cluster function implemented" )	
