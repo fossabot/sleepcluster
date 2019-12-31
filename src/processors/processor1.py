@@ -35,12 +35,12 @@ class Processor1(processor.Processor):
 			EMG1entropy = dataLib.bandedSpectralEntropy(EMG1epoch, EMG1.resolution, self.parameters.BANDS)
 			EMG2entropy = dataLib.bandedSpectralEntropy(EMG2epoch, EMG2.resolution, self.parameters.BANDS)
 			EMGentropy = max(EMG1entropy, EMG2entropy)
-			
+			'''
 			zerocross = dataLib.zeroCross(EEGepoch)
 			
 			EMGpercentile = self.mergePercentileMean(EMG1epoch, EMG2epoch, self.parameters.PERCENTILE)
 			EMGmean = self.mergeMean(EMG1epoch, EMG2epoch)
-			
+			'''
 			data_row = [i]
 			for band in EEGbands:
 				data_row.append(band)

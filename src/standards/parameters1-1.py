@@ -15,8 +15,6 @@ rms EMG for both channels
 Time-Frequency Balanced Spectral Entropy of EEG and EMG
  - Time windows? Longer windows for shorter frequencies
 
-Moving Average on EEG
-
 Zero Crossings on EEG
  - On the Moving Average
  - On absolute Zero
@@ -29,7 +27,7 @@ EMG average amplitude
 class Parameters1_1(standards.Parameters1):
 	
 	def __init__(self):
-		self.NORMALIZER = dataLib.maxNormalize
+		self.NORMALIZER = dataLib.logNormalize
 		self.EPOCH_SIZE = 5
 		self.PERCENTILE = 95
 		self.BANDS = [	(0, 4),
