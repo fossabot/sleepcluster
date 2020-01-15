@@ -3,6 +3,8 @@ import os
 import numpy as np
 from xlwt import Workbook
 
+import lib.dataset as dataset 
+
 # Processor defines the Class structure and necessary components
 #	to a Data Processor plugin
 class Processor(ABC):
@@ -27,7 +29,10 @@ class Processor(ABC):
 		for row in range(header.shape[0]):
 			for col in range(header.shape[1]):
 				ws.write(row, col, header[row][col])
-		for row in range(1, 1 + data.shape[0]):
+		for row in range(data.shape[0]):
 			for col in range(data.shape[1]):
-				ws.write(row, col, data[row][col])
+				ws.write(row+1, col, data[row][col])
 		wb.save(location)
+		
+	def createDataset(self, locations, features, length):
+		return dataset.Dataset(locations, features, length)
