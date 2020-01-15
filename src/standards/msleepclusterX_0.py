@@ -15,7 +15,7 @@ class mSleepClusterX_0(standards.mSleepClusterX):
 						(11, 15),
 						(16, 40)
 					]
-		self.NPERSEG_FACTOR = 1
-		self.NOVERLAP_FACTOR = 0.5
-		self.DETREND = 'linear'
+		self.NPERSEG_FACTOR = { 'EEG':1, 'EMG1':1, 'EMG2':1 }
+		self.NOVERLAP_FACTOR = { 'EEG':0.5, 'EMG1':0.5, 'EMG2':0.5 }
+		self.DETREND = { 'EEG':'linear', 'EMG1':'linear', 'EMG2':'linear' }
 	

@@ -24,9 +24,3 @@ class mSleepClusterX(standards.Standards):
 		if not(isintance(self.PERCENTILE, float) or isinstance(self.PERCENTILE, int)) or \
 			self.PERCENTILE < 0 or self.PERCENTILE > 1:
 			raise standards.ParameterError("PERCENTILE", "Must be a number between 0 and 1, inclusive")
-		if not(isintance(self.NPERSEG_FACTOR, float) or isinstance(self.NPERSEG_FACTOR, int)) or \
-			self.NPERSEG_FACTOR <= 0:
-			raise standards.ParameterError("EPOCH_SIZE", "Must be a positive number")
-		if not(isintance(self.NOVERLAP_FACTOR, float) or isinstance(self.NOVERLAP_FACTOR, int)) or \
-			self.NOVERLAP_FACTOR <= 0:
-			raise standards.ParameterError("EPOCH_SIZE", "Must be a positive number")

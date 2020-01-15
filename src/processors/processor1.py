@@ -24,19 +24,32 @@ class Processor1(processor.Processor):
 		EMG1 = EMG1.process(self.parameters.NORMALIZER, self.parameters.NORMALIZE_ARG)
 		EMG2 = EMG2.process(self.parameters.NORMALIZER, self.parameters.NORMALIZE_ARG)		
 		epoch_data = self.calculateEpochs(epoch_size=self.parameters.EPOCH_SIZE, EEG=EEG, EMG1=EMG1, EMG2=EMG2)
-		num_epochs = floor(min([epoch_data['EEG_epochs'], epoch_data['EMG1_epochs'], epoch_data['EMG2_epochs']]))
+		num_epochs = floor(min([epoch_data['EEG_epochs'], epoch_data['EMG1_epochs'], epoch_data['EMG2_epochs']]))		
 		for i in tqdm(range(num_epochs)):
 			EEGepoch = EEG.getData(i*epoch_data['EEG_size'], k=(i+1)*epoch_data['EEG_size'])
 			EMG1epoch = EMG1.getData(i*epoch_data['EMG1_size'], k=(i+1)*epoch_data['EMG1_size'])
 			EMG2epoch = EMG2.getData(i*epoch_data['EMG2_size'], k=(i+1)*epoch_data['EMG2_size'])
 			
-			EEGbands = dataLib.computeBands(EEGepoch, EEG.resolution, self.parameters.BANDS)
+			
+			eeg_nperseg = len(EEGepoch) * self.parameters.NPERSEG_FACTOR['EEG']
+			eeg_noverlap = len(EEGepoch) * self.parameters.NOVERLAP_FACTOR['EEG']
+			emg1_nperseg = len(EMG1epoch) * self.parameters.NOVERLAP_FACTOR['EMG1']
+			emg1_noverlap = len(EMG1epoch) * self.parameters.NOVERLAP_FACTOR['EMG1']
+			emg2_nperseg = len(EMG2epoch) * self.parameters.NOVERLAP_FACTOR['EMG2']
+			emg2_noverlap = len(EMG2epoch) * self.parameters.NOVERLAP_FACTOR['EMG2']
+			eeg_f, eeg_Pxx = dataLib.welch(EEGepoch, fs=EEG.resolution, nperseg=eeg_nperseg, 
+									noverlap=eeg_noverlap, detrend=self.parameters.DETREND['EEG'])
+			emg1_f, emg1_Pxx = dataLib.welch(EMG1epoch, fs=EMG1.resolution, nperseg=emg1_nperseg, 
+									noverlap=emg1_noverlap, detrend=self.parameters.DETREND['EMG1'])
+			emg2_f, emg2_Pxx = dataLib.welch(EMG2epoch, fs=EMG2.resolution, nperseg=emg2_nperseg, 
+									noverlap=emg2_noverlap, detrend=self.parameters.DETREND['EMG1'])
+			EEGbands = dataLib.computeBands(eeg_f, eeg_Pxx, self.parameters.BANDS)
 			
 			rmsEMG = self.mergeRMS(EMG1epoch, EMG2epoch)
 			
-			EEGentropy = dataLib.bandedSpectralEntropy(EEGepoch, EEG.resolution, self.parameters.BANDS)
-			EMG1entropy = dataLib.bandedSpectralEntropy(EMG1epoch, EMG1.resolution, self.parameters.BANDS)
-			EMG2entropy = dataLib.bandedSpectralEntropy(EMG2epoch, EMG2.resolution, self.parameters.BANDS)
+			EEGentropy = dataLib.simpleSpectralEntropy(eeg_f, eeg_Pxx)
+			EMG1entropy = dataLib.simpleSpectralEntropy(emg1_f, emg1_Pxx)
+			EMG2entropy = dataLib.simpleSpectralEntropy(emg2_f, emg2_Pxx)
 			EMGentropy = max(EMG1entropy, EMG2entropy)
 						
 			EMGpercentile = self.mergePercentileMean(EMG1epoch, EMG2epoch, self.parameters.PERCENTILE)
