@@ -11,5 +11,5 @@ def loadPlugins():
 	processor_mods = []
 	processor_mods.append(SourceFileLoader("processor1", "./processors/processor1.py").load_module())
 	standards_mods = []
-	standards_mods.append(SourceFileLoader("parameters1", "./standards/parameters1.py").load_module())
-	return modules
+	standards_mods.append(SourceFileLoader("msleepclusterX_0", "./standards/msleepclusterX_0.py").load_module())
+	return {'readers':reader_mods, 'processors':processor_mods, 'standards':standards_mods}
