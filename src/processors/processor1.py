@@ -31,17 +31,17 @@ class Processor1(processor.Processor):
 			EMG2epoch = EMG2.getData(i*epoch_data['EMG2_size'], k=(i+1)*epoch_data['EMG2_size'])
 			
 			
-			eeg_nperseg = len(EEGepoch) * self.parameters.NPERSEG_FACTOR['EEG']
-			eeg_noverlap = len(EEGepoch) * self.parameters.NOVERLAP_FACTOR['EEG']
-			emg1_nperseg = len(EMG1epoch) * self.parameters.NOVERLAP_FACTOR['EMG1']
-			emg1_noverlap = len(EMG1epoch) * self.parameters.NOVERLAP_FACTOR['EMG1']
-			emg2_nperseg = len(EMG2epoch) * self.parameters.NOVERLAP_FACTOR['EMG2']
-			emg2_noverlap = len(EMG2epoch) * self.parameters.NOVERLAP_FACTOR['EMG2']
-			eeg_f, eeg_Pxx = dataLib.welch(EEGepoch, fs=EEG.resolution, nperseg=eeg_nperseg, 
+			eeg_nperseg = 1/EEG.resolution * self.parameters.NPERSEG_FACTOR['EEG']
+			eeg_noverlap = eeg_nperseg * self.parameters.NOVERLAP_FACTOR['EEG']
+			emg1_nperseg = 1/EMG1.resolution * self.parameters.NPERSEG_FACTOR['EMG1']
+			emg1_noverlap = emg1_nperseg * self.parameters.NOVERLAP_FACTOR['EMG1']
+			emg2_nperseg = 1/EMG2.resolution * self.parameters.NPERSEG_FACTOR['EMG2']
+			emg2_noverlap = emg2_nperseg * self.parameters.NOVERLAP_FACTOR['EMG2']
+			eeg_f, eeg_Pxx = dataLib.welch(EEGepoch, fs=1/EEG.resolution, nperseg=eeg_nperseg, 
 									noverlap=eeg_noverlap, detrend=self.parameters.DETREND['EEG'])
-			emg1_f, emg1_Pxx = dataLib.welch(EMG1epoch, fs=EMG1.resolution, nperseg=emg1_nperseg, 
+			emg1_f, emg1_Pxx = dataLib.welch(EMG1epoch, fs=1/EMG1.resolution, nperseg=emg1_nperseg, 
 									noverlap=emg1_noverlap, detrend=self.parameters.DETREND['EMG1'])
-			emg2_f, emg2_Pxx = dataLib.welch(EMG2epoch, fs=EMG2.resolution, nperseg=emg2_nperseg, 
+			emg2_f, emg2_Pxx = dataLib.welch(EMG2epoch, fs=1/EMG2.resolution, nperseg=emg2_nperseg, 
 									noverlap=emg2_noverlap, detrend=self.parameters.DETREND['EMG1'])
 			EEGbands = dataLib.computeBands(eeg_f, eeg_Pxx, self.parameters.BANDS)
 			

@@ -51,4 +51,5 @@ class Dataset:
 								'num_features': compare.num_features,
 								'features': compare.features,
 								'total_length': length
+								}
 		return data_dict
