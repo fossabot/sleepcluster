@@ -5,7 +5,7 @@ from dataobjects import dataobject
 from dataobjects import abstract_datareader as dataReader
 
 # A Data Importer (DataReader) plugin for .mat files exported by Spike2 v7
-class smrMAT(dataReader.DataReader):
+class smrMATreader(dataReader.DataReader):
 	standard = ".mat files exported by Spike2 v7"
 	filetypes = [("MAT-files", "*.mat")]
 
@@ -25,14 +25,14 @@ class smrMAT(dataReader.DataReader):
 		for field in matfile.keys():
 			if '_Ch' in field:
 				channels.append(matfile[field][0][0][0][0])
-			if c == matfile[field][0][0][0][0]:
-				try:
-					data = np.absolute((matfile[field][0][0][8]).flatten())
-					resolution = matfile[field][0][0][2][0][0]
-					length = matfile[field][0][0][7][0][0]
-					dataObject = dataobject.DataObject(name=c, data=data, resolution=resolution, length=length)
-				except Exception:
-					raise FileNotFoundError("An error occurred extracting from channel " + c)
+				if c == matfile[field][0][0][0][0]:
+					try:
+						data = np.absolute((matfile[field][0][0][8]).flatten())
+						resolution = matfile[field][0][0][2][0][0]
+						length = matfile[field][0][0][7][0][0]
+						dataObject = dataobject.DataObject(name=c, data=data, resolution=resolution, length=length)
+					except Exception:
+						raise FileNotFoundError("An error occurred extracting from channel " + c)
 		if data.size == 0:
 			raise FileNotFoundError("Channel named " + c + " not found. Instead found: " + str(channels))
 		return dataObject

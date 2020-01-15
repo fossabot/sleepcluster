@@ -27,6 +27,11 @@ class DataObject():
 	def getIndices(self, i, k=None):
 		return self.get(self.indices, i, k)
 		
-	def process(self, function):
-		data = function(self.data)
+	def process(self, function, arg):
+		if function is None:
+			return self
+		elif arg is None:
+			data = function(self.data)
+		else:
+			data = function(self.data, arg)
 		return DataObject(name=self.name, data=data, resolution=self.resolution, length=self.length)
