@@ -4,6 +4,7 @@ from tqdm import tqdm
 
 from lib import data as dataLib
 from processors import abstract_processor as processor
+from dataobjects import dataobject as dataObject
 
 
 # A Processor plugin for the msleepclusterX_0-type SleepCluster Standard 
@@ -13,75 +14,101 @@ class Processor1(processor.Processor):
 		self.parameters = parameters
 		pass
 		
-	def process(self, EEG=None, EMG1=None, EMG2=None):
-		headers = np.array([['Epoch','EEG PS1','EEG PS2','EEG PS3',
-					'rmsEMG','T-F entropy EEG','T-F entropy EMG',
-					'EMG95%mean','EMGmean'
-					]])
+	def process(self, channels={}):
+		if channels.keys() != self.parameters.CHANNELS.keys():
+			raise RuntimeError("Channels do not comply with standards")
+		for key in self.parameters.CHANNELS.keys():
+			if len(channels[key]) != self.parameters.CHANNELS[key]:
+				raise RuntimeError("Channels do not comply with standards")
+			for el in channels[key]:
+				if not(isinstance(el, dataObject.DataObject)):
+					raise RuntimeError("Channels do not comply with standards")
+		
+		headers = self.formatHeaders()
 		data = []
+		
+		EPOCH_DATA = {}
 
-		EEG = EEG.process(self.parameters.NORMALIZER, self.parameters.NORMALIZE_ARG)
-		EMG1 = EMG1.process(self.parameters.NORMALIZER, self.parameters.NORMALIZE_ARG)
-		EMG2 = EMG2.process(self.parameters.NORMALIZER, self.parameters.NORMALIZE_ARG)		
-		epoch_data = self.calculateEpochs(epoch_size=self.parameters.EPOCH_SIZE, EEG=EEG, EMG1=EMG1, EMG2=EMG2)
-		num_epochs = floor(min([epoch_data['EEG_epochs'], epoch_data['EMG1_epochs'], epoch_data['EMG2_epochs']]))		
+		for key in channels.keys():
+			EPOCH_DATA[key] = []
+			for i in range(len(channels[key])):
+				channels[key][i] = channels[key][i].process(self.parameters.NORMALIZER[key], self.parameters.NORMALIZE_ARG[key])
+				EPOCH_DATA[key].append(self.calculateEpochs(channels[key][i], epoch_size=self.parameters.EPOCH_SIZE))
+		
+		num_epochs = floor(min(EPOCH_DATA.values()[:][1]))		
 		for i in tqdm(range(num_epochs)):
-			EEGepoch = EEG.getData(i*epoch_data['EEG_size'], k=(i+1)*epoch_data['EEG_size'])
-			EMG1epoch = EMG1.getData(i*epoch_data['EMG1_size'], k=(i+1)*epoch_data['EMG1_size'])
-			EMG2epoch = EMG2.getData(i*epoch_data['EMG2_size'], k=(i+1)*epoch_data['EMG2_size'])
+		
+			features = {}
+			for feature in self.parameters.FEATURES:
+				features[feature] = { 'merge': self.parameters.FEATURES[feature]['merge'] },
+		
+			for key in channels.keys():
 			
+				for feature in features.keys():
+					features[feature][key] = []
+				
+				for j in range(len(channels[key])):
+					epoch = channels[key][j].getData(i*EPOCH_DATA[key][j]['size'], k=(i+1)*EPOCH_DATA[key][j]['size'])
+
+					fs = 1/channels[key][j].resolution
+					nperseg = fs * self.parameters.NPERSEG_FACTOR[key]
+					noverlap = nperseg * self.parameters.NOVERLAP_FACTOR[key]
+					f, Pxx = dataLib.welch(epoch, fs=fs, nperseg=nperseg, noverlap=noverlap,
+											detrend=self.parameters.DETREND[key])
+					
+					if self.parameters.FEATURES['0.BANDS'][key]:
+						features['0.BANDS'][key].append(dataLib.computeBands(f, Pxx, self.parameters.FEATURES['0.BANDS'][key]))
+					if self.parameters.FEATURES['1.ENTROPY'][key]:
+						features['1.ENTROPY'][key].append(dataLib.simpleSpectralEntropy(f, Pxx))
+					if self.parameters.FEATURES['2.RMS'][key]:
+						features['2.RMS'][key].append(dataLib.rms(epoch))
+					if self.parameters.FEATURES['3.PERCENTILE'][key]:
+						features['3.PERCENTILE'][key].append(dataLib.percentileMean(epoch, self.parameters.FEATURES['3.PERCENTILE'][key]))
+					if self.parameters.FEATURES['4.MEAN'][key]:
+						features['4.MEAN'][key].append(np.mean(epoch))
 			
-			eeg_nperseg = 1/EEG.resolution * self.parameters.NPERSEG_FACTOR['EEG']
-			eeg_noverlap = eeg_nperseg * self.parameters.NOVERLAP_FACTOR['EEG']
-			emg1_nperseg = 1/EMG1.resolution * self.parameters.NPERSEG_FACTOR['EMG1']
-			emg1_noverlap = emg1_nperseg * self.parameters.NOVERLAP_FACTOR['EMG1']
-			emg2_nperseg = 1/EMG2.resolution * self.parameters.NPERSEG_FACTOR['EMG2']
-			emg2_noverlap = emg2_nperseg * self.parameters.NOVERLAP_FACTOR['EMG2']
-			eeg_f, eeg_Pxx = dataLib.welch(EEGepoch, fs=1/EEG.resolution, nperseg=eeg_nperseg, 
-									noverlap=eeg_noverlap, detrend=self.parameters.DETREND['EEG'])
-			emg1_f, emg1_Pxx = dataLib.welch(EMG1epoch, fs=1/EMG1.resolution, nperseg=emg1_nperseg, 
-									noverlap=emg1_noverlap, detrend=self.parameters.DETREND['EMG1'])
-			emg2_f, emg2_Pxx = dataLib.welch(EMG2epoch, fs=1/EMG2.resolution, nperseg=emg2_nperseg, 
-									noverlap=emg2_noverlap, detrend=self.parameters.DETREND['EMG1'])
-			EEGbands = dataLib.computeBands(eeg_f, eeg_Pxx, self.parameters.BANDS)
-			
-			rmsEMG = self.mergeRMS(EMG1epoch, EMG2epoch)
-			
-			EEGentropy = dataLib.simpleSpectralEntropy(eeg_f, eeg_Pxx)
-			EMG1entropy = dataLib.simpleSpectralEntropy(emg1_f, emg1_Pxx)
-			EMG2entropy = dataLib.simpleSpectralEntropy(emg2_f, emg2_Pxx)
-			EMGentropy = max(EMG1entropy, EMG2entropy)
-						
-			EMGpercentile = self.mergePercentileMean(EMG1epoch, EMG2epoch, self.parameters.PERCENTILE)
-			EMGmean = self.mergeMean(EMG1epoch, EMG2epoch)
-			
-			data_row = [i]
-			for band in EEGbands:
-				data_row.append(band)
-			data_row += [rmsEMG, EEGentropy, EMGentropy, EMGpercentile, EMGmean]
+			features = self.mergeFeatures(features)	
+			data_row = [i] + self.formatFeatures(features)
 			data.append(data_row)
 		np_data = np.array(data)
+		np_headers = np.array(headers)
 		return {'headers': headers, 'data':np_data}
 	
+	def formatHeaders(self):
+		headers = ['Epoch']
+		for f in sorted(self.parameters.FEATURES.keys())
+			for key in sorted(self.parameters.FEATURES[f].keys()):
+				if key != 'merge':
+				if isinstance(self.parameters.FEATURES[f][key], list):
+					for i in range(len(self.parameters.FEATURES[f][key]):
+						headers.append(f+':'+key+'-'+i)
+				else:
+					headers.append(f+':'+key)
+		return headers
 	
-	def calculateEpochs(self, epoch_size=5, EEG=None, EMG1=None, EMG2=None):
-		epoch_data = {
-						'EEG_size': floor(epoch_size / EEG.resolution),
-						'EMG1_size': floor(epoch_size / EMG1.resolution),
-						'EMG2_size': floor(epoch_size / EMG2.resolution)
-					}
-		epoch_data['EEG_epochs'] = floor(EEG.length / epoch_data['EEG_size'])
-		epoch_data['EMG1_epochs'] = floor(EMG1.length / epoch_data['EMG1_size'])
-		epoch_data['EMG2_epochs'] = floor(EMG2.length / epoch_data['EMG2_size'])
+	def calculateEpochs(self, channel, epoch_size=5):
+		size = floor(epoch_size / channel.resolution)
+		epochs = floor(channel.length / size)
+		epoch_data = { 'size':size, 'epochs':epochs }
 		return epoch_data
+		
+	def mergeFeatures(self, features):
+		for f in features.keys():
+			for key in features[f].keys():
+				if key != 'merge' and len(features[f][key]) > 1:
+					if features[f]['merge'] = 'MEAN':
+						features[f][key] = np.mean(features[f][key], axis=0)
+					elif features[f]['merge'] = 'MAX':
+						features[f][key] = np.maximum(features[f][key], axis=0)
+		return features
 
-	def mergeRMS(self, d1, d2):
-		d1rms = dataLib.rms(d1)
-		d2rms = dataLib.rms(d2)
-		return np.maximum(d1rms, d2rms)
-	
-	def mergePercentileMean(self, d1, d2, k):
-		return np.mean([dataLib.percentileMean(d1, k), dataLib.percentileMean(d2, k)])
-	
-	def mergeMean(self, d1, d2):
-		return np.mean([np.mean(d1), np.mean(d2)])
+	def formatFeatures(self, features):
+		data_row = []
+		for f in sorted(features.keys()):
+			for key in sorted(features[f].keys()):
+				if key != 'merge':
+					if isinstance(features[f][key], list):
+						for el in features[f][key]:
+							data_row.append(el)
+					elif isinstance(features[f][key], float):
+						data_row.append(features[f][key])
