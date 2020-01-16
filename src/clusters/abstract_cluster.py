@@ -5,11 +5,11 @@ from abc import ABC, abstractmethod
 #	to a Cluster Algorithm plugin
 class Cluster(ABC):
 
-	def __init__(self, type=None):
-		self.type = None
+	def __init__(self):
+		pass
 		
 	def __str__(self):
-		return type(self).__name__ + ": " + self.type
+		return type(self).__name__
 
 	@abstractmethod
 	def cluster(self, *args, **kwargs):
