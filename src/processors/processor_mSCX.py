@@ -75,8 +75,8 @@ class Processor_mSCX(processor.Processor):
 			data_row = [i] + self.formatFeatures(features)
 			data.append(data_row)
 		np_data = np.array(data)
-		np_headers = np.array(headers)
-		return {'headers': headers, 'data':np_data}
+		np_headers = np.array([headers])
+		return {'headers': np_headers, 'data':np_data}
 	
 	def formatHeaders(self):
 		headers = ['Epoch']
@@ -84,7 +84,7 @@ class Processor_mSCX(processor.Processor):
 		for f in features:
 			keys = sorted(self.parameters.FEATURES[f].keys())
 			for key in keys:
-				if key != 'merge':
+				if key != 'merge' and self.parameters.FEATURES[f][key] not in [False, None]:
 					if isinstance(self.parameters.FEATURES[f][key], list):
 						for i in range(len(self.parameters.FEATURES[f][key])):
 							headers.append(f+':'+key+'-'+str(i))
@@ -101,7 +101,7 @@ class Processor_mSCX(processor.Processor):
 	def mergeFeatures(self, features):
 		for f in features.keys():
 			for key in features[f].keys():
-				if key != 'merge' and len(features[f][key]) > 1:
+				if key != 'merge' and len(features[f][key]) >= 1:
 					if features[f]['merge'] == 'MEAN':
 						features[f][key] = np.mean(features[f][key], axis=0)
 					elif features[f]['merge'] == 'MAX':
@@ -114,8 +114,8 @@ class Processor_mSCX(processor.Processor):
 		for f in features:
 			keys = sorted(self.parameters.FEATURES[f].keys())
 			for key in keys:
-				if key != 'merge':
-					if isinstance(featureData[f][key], list):
+				if key != 'merge' and self.parameters.FEATURES[f][key] not in [False, None]:
+					if isinstance(featureData[f][key], np.ndarray):
 						for el in featureData[f][key]:
 							data_row.append(el)
 					elif isinstance(featureData[f][key], float):

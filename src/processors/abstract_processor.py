@@ -20,7 +20,7 @@ class Processor(ABC):
 		raise NotImplementedError( "No process function implemented" )	
 		
 	def write(self, name, header, data, location):
-		if header.shape[1] != header.shape[1]:
+		if header.shape[1] != data.shape[1]:
 			raise ValueError("Dimensions of header and data do not match")
 		if os.path.isfile(location):
 			os.remove(location)
