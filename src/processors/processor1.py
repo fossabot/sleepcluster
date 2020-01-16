@@ -6,7 +6,7 @@ from lib import data as dataLib
 from processors import abstract_processor as processor
 
 
-# A Processor plugin for the Parameters1-type SleepCluster Standard 
+# A Processor plugin for the msleepclusterX_0-type SleepCluster Standard 
 class Processor1(processor.Processor):
 
 	def __init__(self, parameters):
@@ -14,7 +14,7 @@ class Processor1(processor.Processor):
 		pass
 		
 	def process(self, EEG=None, EMG1=None, EMG2=None):
-		headers = np.array([['Epoch','EEG PS1','EEG PS2','EEG PS3','EEG PS4',
+		headers = np.array([['Epoch','EEG PS1','EEG PS2','EEG PS3',
 					'rmsEMG','T-F entropy EEG','T-F entropy EMG',
 					'EMG95%mean','EMGmean'
 					]])

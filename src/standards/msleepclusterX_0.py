@@ -12,8 +12,7 @@ class mSleepClusterX_0(standards.mSleepClusterX):
 		self.PERCENTILE = 95
 		self.BANDS = [	(0.5, 3),
 						(7, 9),
-						(12, 15),
-						(16, 40)
+						(12, 40)
 					]
 		self.NPERSEG_FACTOR = { 'EEG':0.75, 'EMG1':0.75, 'EMG2':0.75 }
 		self.NOVERLAP_FACTOR = { 'EEG':0.5, 'EMG1':0.5, 'EMG2':0.5 }
