@@ -6,15 +6,27 @@ from lib import data as dataLib
 class mSleepClusterX_0(standards.mSleepClusterX):
 	
 	def __init__(self):
-		self.NORMALIZER = dataLib.maxNormalize
-		self.NORMALIZE_ARG = None
+		self.CHANNELS = {
+							'EEG':1,
+							'EMG':2
+						}
 		self.EPOCH_SIZE = 5
-		self.PERCENTILE = 95
-		self.BANDS = [	(0.5, 3),
-						(7, 9),
-						(12, 40)
-					]
-		self.NPERSEG_FACTOR = { 'EEG':0.75, 'EMG1':0.75, 'EMG2':0.75 }
-		self.NOVERLAP_FACTOR = { 'EEG':0.5, 'EMG1':0.5, 'EMG2':0.5 }
-		self.DETREND = { 'EEG':'constant', 'EMG1':'constant', 'EMG2':'constant' }
-	
+		
+		self.NORMALIZER = 		{	'EEG': dataLib.maxNormalize, 	'EMG': dataLib.maxNormalize }
+		self.NORMALIZE_ARG = 	{ 	'EEG': None, 					'EMG': None 				}
+		
+		self.NPERSEG_FACTOR = 	{ 	'EEG': 0.75,		'EMG': 0.75			}
+		self.NOVERLAP_FACTOR = 	{ 	'EEG': 0.5, 		'EMG': 0.5 			}
+		self.DETREND = 			{ 	'EEG': 'constant', 	'EMG': 'constant' 	}
+		
+		self.FEATURES = {
+							'0.BANDS':			{
+													'EEG': [	(0.5, 3), 	(7, 9), 	(12, 40)	],
+													'EMG': None,
+													'merge': 'MEAN'
+												},
+							'1.ENTROPY': 		{ 	'EEG': True,	'EMG': True, 	'merge': 'MAX' 	},
+							'2.RMS': 			{ 	'EEG': False,	'EMG': True, 	'merge': 'MAX' 	},
+							'3.PERCENTILE': 	{ 	'EEG': None, 	'EMG': 95, 		'merge': 'MEAN'	},
+							'4.MEAN':			{ 	'EEG': False, 	'EMG': True, 	'merge': 'MEAN'	}
+						}

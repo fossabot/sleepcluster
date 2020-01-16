@@ -1,6 +1,4 @@
 import numpy as np
-#from scipy.integrate import simps
-#from mne.time_frequency import psd_array_multitaper
 from scipy import signal
 
 def maxNormalize(data, scale=(0,1)):
