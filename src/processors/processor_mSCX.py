@@ -7,8 +7,8 @@ from processors import abstract_processor as processor
 from dataobjects import dataobject as dataObject
 
 
-# A Processor plugin for the msleepclusterX_0-type SleepCluster Standard 
-class Processor1(processor.Processor):
+# A Processor plugin for the msleepclusterX-type SleepCluster Standard 
+class Processor_mSCX(processor.Processor):
 
 	def __init__(self, parameters):
 		self.parameters = parameters
@@ -35,15 +35,19 @@ class Processor1(processor.Processor):
 				channels[key][i] = channels[key][i].process(self.parameters.NORMALIZER[key], self.parameters.NORMALIZE_ARG[key])
 				EPOCH_DATA[key].append(self.calculateEpochs(channels[key][i], epoch_size=self.parameters.EPOCH_SIZE))
 		
-		num_epochs = floor(min(EPOCH_DATA.values()[:][1]))		
+		num_epochs = []
+		for key in EPOCH_DATA.keys():
+			for channel in EPOCH_DATA[key]:
+				num_epochs.append(channel['epochs'])
+		num_epochs = min(num_epochs)
+	
 		for i in tqdm(range(num_epochs)):
 		
 			features = {}
 			for feature in self.parameters.FEATURES:
-				features[feature] = { 'merge': self.parameters.FEATURES[feature]['merge'] },
+				features[feature] = { 'merge': self.parameters.FEATURES[feature]['merge'] }
 		
 			for key in channels.keys():
-			
 				for feature in features.keys():
 					features[feature][key] = []
 				
@@ -76,14 +80,16 @@ class Processor1(processor.Processor):
 	
 	def formatHeaders(self):
 		headers = ['Epoch']
-		for f in sorted(self.parameters.FEATURES.keys())
-			for key in sorted(self.parameters.FEATURES[f].keys()):
+		features = sorted(self.parameters.FEATURES.keys())
+		for f in features:
+			keys = sorted(self.parameters.FEATURES[f].keys())
+			for key in keys:
 				if key != 'merge':
-				if isinstance(self.parameters.FEATURES[f][key], list):
-					for i in range(len(self.parameters.FEATURES[f][key]):
-						headers.append(f+':'+key+'-'+i)
-				else:
-					headers.append(f+':'+key)
+					if isinstance(self.parameters.FEATURES[f][key], list):
+						for i in range(len(self.parameters.FEATURES[f][key])):
+							headers.append(f+':'+key+'-'+str(i))
+					else:
+						headers.append(f+':'+key)
 		return headers
 	
 	def calculateEpochs(self, channel, epoch_size=5):
@@ -96,19 +102,22 @@ class Processor1(processor.Processor):
 		for f in features.keys():
 			for key in features[f].keys():
 				if key != 'merge' and len(features[f][key]) > 1:
-					if features[f]['merge'] = 'MEAN':
+					if features[f]['merge'] == 'MEAN':
 						features[f][key] = np.mean(features[f][key], axis=0)
-					elif features[f]['merge'] = 'MAX':
-						features[f][key] = np.maximum(features[f][key], axis=0)
+					elif features[f]['merge'] == 'MAX':
+						features[f][key] = np.amax(features[f][key], axis=0)
 		return features
 
-	def formatFeatures(self, features):
+	def formatFeatures(self, featureData):
 		data_row = []
-		for f in sorted(features.keys()):
-			for key in sorted(features[f].keys()):
+		features = sorted(self.parameters.FEATURES.keys())
+		for f in features:
+			keys = sorted(self.parameters.FEATURES[f].keys())
+			for key in keys:
 				if key != 'merge':
-					if isinstance(features[f][key], list):
-						for el in features[f][key]:
+					if isinstance(featureData[f][key], list):
+						for el in featureData[f][key]:
 							data_row.append(el)
-					elif isinstance(features[f][key], float):
-						data_row.append(features[f][key])
+					elif isinstance(featureData[f][key], float):
+						data_row.append(featureData[f][key])
+		return data_row
