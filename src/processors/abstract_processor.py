@@ -34,5 +34,5 @@ class Processor(ABC):
 				ws.write(row+1, col, data[row][col])
 		wb.save(location)
 		
-	def createDataset(self, locations, features, length):
-		return dataset.Dataset(locations, features, length)
+	def createDataset(self, locations, features, lengths):
+		return dataset.Dataset(locations, features, lengths)
