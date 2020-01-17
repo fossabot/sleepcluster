@@ -26,7 +26,7 @@ class Dataset:
 		np_data = np.array(data)
 		return {'headers': np_headers, 'data': np_data}
 			
-	def writeDataset(self, location):
+	def write(self, location):
 		with open(location, 'w') as file:
 			file.write(str(len(self.files)) + '\n')
 			file.write(str(self.num_features) + '\n')
