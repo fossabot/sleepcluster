@@ -1,6 +1,8 @@
 import numpy as np
 from xlrd import open_workbook
 
+
+# Dataset is a collection of processed .xls files that contain feature data
 class Dataset:
 	
 	def __init__(self, files, features):
@@ -24,7 +26,6 @@ class Dataset:
 		np_data = np.array(data)
 		return {'headers': np_headers, 'data': np_data}
 			
-
 	def writeDataset(self, location):
 		with open(location, 'w') as file:
 			file.write(str(len(self.files)) + '\n')
@@ -43,31 +44,32 @@ class Dataset:
 			for item in locations:
 				file.write(item + "\n")
 
-
-def readDataset(location):
-	with open(location, 'r') as file:
-		num_datasets = int(file.readline())
-		num_features = int(file.readline())
-		lengths = file.readline().split(',')
-		for i in range(len(lengths)):
-			lengths[i] = int(lengths[i])
-		features = file.readline().split(',')
-		locations = []
-		for i in range(num_datasets):
-			locations.append(file.readline())
+	@staticmethod
+	def readDataset(location):
+		with open(location, 'r') as file:
+			num_datasets = int(file.readline())
+			num_features = int(file.readline())
+			lengths = file.readline().split(',')
+			for i in range(len(lengths)):
+				lengths[i] = int(lengths[i])
+			features = file.readline().split(',')
+			locations = []
+			for i in range(num_datasets):
+				locations.append(file.readline())
+			files = []
+			for length, loc in zip(lengths, locations):
+				files.append({'location': loc, 'length': length})
+		return Dataset(files, features)
+		
+	@staticmethod
+	def mergeDatasets(datasets):
+		compare = datasets[0]
 		files = []
-		for length, loc in zip(lengths, locations):
-			files.append({'location': loc, 'length': length})
-	return Dataset(files, features)
-	
-def mergeDatasets(datasets):
-	compare = datasets[0]
-	files = []
-	lengths = []
-	locations = []
-	for ds in datasets:
-		if compare.features != ds.features:
-			raise ValueError("Datasets contain different sets or orderings of features")
-		else:
-			files.append(ds.files)
-	return Dataset(files, compare.features)
+		lengths = []
+		locations = []
+		for ds in datasets:
+			if compare.features != ds.features:
+				raise ValueError("Datasets contain different sets or orderings of features")
+			else:
+				files.append(ds.files)
+		return Dataset(files, compare.features)
