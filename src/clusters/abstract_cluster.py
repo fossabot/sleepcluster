@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 class Cluster(ABC):
 
 	def __init__(self):
-		pass
+		self.cluster = None
 
 	def __str__(self):
 		return type(self).__name__
@@ -17,4 +17,4 @@ class Cluster(ABC):
 
 	@abstractmethod
 	def predict(self, *args, **kwargs):
-		raise NotImplementedError( "No predict function implemented" )	
+		raise NotImplementedError( "No predict function implemented" )

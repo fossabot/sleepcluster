@@ -11,10 +11,10 @@ from dataobjects import dataobject as dataObject
 class KMeansCluster(cluster.Cluster):
 
 	def __init__(self, k=3, init='kmeans++', n_init=10, max_iter=100, tol=1e-4, seed=None):
-		self.kmeans = KMeans(n_clusters=k, init=init, n_init=n_init, max_iter=max_iterm tol=tol, seed=seed)
+		self.cluster = KMeans(n_clusters=k, init=init, n_init=n_init, max_iter=max_iterm tol=tol, seed=seed)
 
 	def fit(self, data, weights=None):
-		return self.kmeans.fit(data, weights=weights)
+		return self.cluster.fit(data, weights=weights)
 
 	def predict(self, data, weights=None):
-		return self.kmeans.predict(data, weights=weights)
+		return self.cluster.predict(data, weights=weights)
