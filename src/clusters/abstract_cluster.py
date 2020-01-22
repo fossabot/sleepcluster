@@ -7,10 +7,14 @@ class Cluster(ABC):
 
 	def __init__(self):
 		pass
-		
+
 	def __str__(self):
 		return type(self).__name__
 
 	@abstractmethod
-	def cluster(self, *args, **kwargs):
-		raise NotImplementedError( "No cluster function implemented" )	
+	def fit(self, *args, **kwargs):
+		raise NotImplementedError( "No fit function implemented" )
+
+	@abstractmethod
+	def predict(self, *args, **kwargs):
+		raise NotImplementedError( "No predict function implemented" )	
