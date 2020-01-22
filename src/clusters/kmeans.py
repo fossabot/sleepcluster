@@ -18,3 +18,20 @@ class KMeansCluster(cluster.Cluster):
 
 	def predict(self, data, weights=None):
 		return self.cluster.predict(data, weights=weights)
+
+	def load(self, model):
+		if model['model'] == 'kmeans':
+			self.cluster = KMeans(n_clusters=len(model['centers']))
+			self.cluster.cluster_centers_ = model['centers']
+			self.cluster.inertia_ = model['inertia']
+			self.cluster.n_iter_ = model['n_iter']
+		return	self
+
+	def model(self):
+		model = {
+					'model': 'kmeans',
+					'centers': self.cluster.cluster_centers_,
+					'inertia': self.cluster.inertia_,
+					'n_iter': self.cluster.n_iter_
+				}
+		return model

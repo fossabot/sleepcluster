@@ -18,3 +18,11 @@ class Cluster(ABC):
 	@abstractmethod
 	def predict(self, *args, **kwargs):
 		raise NotImplementedError( "No predict function implemented" )
+
+	@abstractmethod
+	def load(self):
+		raise NotImplementedError("No load function implemented")
+
+	@abstractmethod
+	def model(self):
+		raise NotImplementedError("No model function implemented")
