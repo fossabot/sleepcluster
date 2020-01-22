@@ -1,3 +1,6 @@
 scipy
+sklearn
 numpy
 tqdm
+xlrd
+xlwt
