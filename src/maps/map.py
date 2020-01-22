@@ -21,3 +21,9 @@ class Map():
 				mapping[permutation[i]] = i % self.classes
 			maps.append(mapping)
 		return maps
+
+	def translate(self, mapping, labels):
+		new_labels = []
+		for label in labels:
+			new_labels.append(mapping[label])
+		return new_labels
