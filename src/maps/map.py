@@ -16,7 +16,7 @@ class Map():
 			raise ValueError("Must input at least as many classes as desired")
 		maps = []
 		for permutation in list(itertools.permutations(np.arange(num_clusters))):
-			mapping = {}
+			mapping = { 'classes': self.classes }
 			for i in range(len(permutation):
 				mapping[permutation[i]] = i % self.classes
 			maps.append(mapping)
