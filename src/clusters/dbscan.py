@@ -11,7 +11,7 @@ from dataobjects import dataobject as dataObject
 class DBSCANCluster(cluster.Cluster):
 
 	def __init__(self, eps=0.5, min_samples=5):
-		self.cluster = DBSCAN(eps, min_samples)
+		self.cluster = DBSCAN(eps=eps, min_samples=min_samples)
 
 	def fit(self, data, weights=None):
 		return self.cluster.fit(data, weights=weights)
