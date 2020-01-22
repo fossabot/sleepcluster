@@ -1,6 +1,8 @@
 import numpy as np
 from abc import ABC, abstractmethod
 
+from maps import map
+
 # Performance defines the Class structure and necessary components
 #	to a Performance Calculator plugin
 class Performance(ABC):
@@ -19,7 +21,8 @@ class Performance(ABC):
 		best_accuracy = -1
 		best_map = None
 		for mapping in maps:
-			accuracy = self.calculateAccuracy(mappinig, labels, targets)
+			translation = map.Map.translate(mapping, labels)
+			accuracy = self.calculateAccuracy(translation, targets)
 			if accuracy > best_accuracy:
 				best_accuracy = accuracy
 				best_map = mappinig

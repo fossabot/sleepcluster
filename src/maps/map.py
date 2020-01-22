@@ -22,7 +22,8 @@ class Map():
 			maps.append(mapping)
 		return maps
 
-	def translate(self, mapping, labels):
+	@staticmethod
+	def translate(mapping, labels):
 		new_labels = []
 		for label in labels:
 			new_labels.append(mapping[label])
