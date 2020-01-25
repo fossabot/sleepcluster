@@ -8,7 +8,7 @@ class Dataset:
 	def __init__(self, files, features):
 		self.files = files
 		self.features = features
-		self.total_length = np.sum(self.files[:]['length'])
+		self.total_length = np.sum([file['length'] for file in self.files if 'length' in file])
 		self.num_files = len(files)
 		self.num_features = len(features)
 
@@ -32,7 +32,7 @@ class Dataset:
 			file.write(str(len(self.files)) + '\n')
 			file.write(str(self.num_features) + '\n')
 			string = ""
-			lengths = files[:]['length']
+			lengths = [file['length'] for file in self.files if 'length' in file]
 			for length in lengths:
 				string += str(length) + ","
 			file.write(string[:-1] + '\n')
@@ -41,7 +41,7 @@ class Dataset:
 			for feature in self.features:
 				string += feature + ","
 			file.write(string[:-1] + '\n')
-			locations = files[:]['location']
+			locations = [file['location'] for file in self.files if 'location' in file]
 			for item in locations:
 				file.write(item + "\n")
 
