@@ -25,5 +25,5 @@ class Performance(ABC):
 			accuracy = self.calculateAccuracy(translation, targets)
 			if accuracy > best_accuracy:
 				best_accuracy = accuracy
-				best_map = mappinig
+				best_map = mapping
 		return best_map, best_accuracy
