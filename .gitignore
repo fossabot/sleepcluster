@@ -6,3 +6,4 @@ src/build
 **/test.py
 **/*.xls
 **/*.xlsx
+**/*.txt
