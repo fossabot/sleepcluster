@@ -9,14 +9,6 @@ from clusters import abstract_cluster as cluster
 from dataobjects import dataobject as dataObject
 
 
-def distance(p1, p2):
-	'''
-	Compute Euclidean distance
-	p1, p2: vectors
-	'''
-	dim = checkDimensionality(p1, p2)
-	return
-
 def array(*args):
 	'''
 	Returns a numpy array of each argument
@@ -40,7 +32,7 @@ def checkDimensionality(*args):
 	for v in np_args[1:]:
 		if v.ndim != ndim:
 			raise ValueError("Arguments must be the same dimensions")
-	return ndim
+	return ndim - 1
 
 def ellipsoid(n, components):
 	'''
@@ -49,20 +41,32 @@ def ellipsoid(n, components):
 	components: vectors defining axes of ellipsoid
 	'''
 	dim = checkDimensionality(components)
-	if dim - n != 1:
+	if dim != n:
 		raise ValueError("Arguments must have correct relative dimensions")
 	ellipsoid_num = 2 * np.power(np.pi, n / 2) * np.prod(np.linalg.norm(components, axis=-1))
 	ellipsoid_denom = n * math.gamma(n / 2)
 	return ellipsoid_num / ellipsoid_denom
 
-def withinEllipsoid(n, center, components, points):
+def withinEllipsoid(center, components, points):
 	'''
 	Computes whether points lie within the ellipsoid
 	n: dimensions
 	ellipse: vectors definig aces of ellipsoid
 	points: ndarray of points
 	'''
-	mask = np.sum(np.square((points - center) / np.linalg.norm(components, axis=-1)), axis=-1) <= 1
+	dim = checkDimensionality(center, points)
+	param_dim = checkDimensionality(components)
+	if param_dim - dim != 1:
+		raise ValueError("Arguments must have correct relative dimensions")
+	components_norm = np.linalg.norm(components, axis=-1)
+	if np.any(components_norm <= 0):
+		ellipse = np.inf
+	else:
+		ellipse = np.square((points - center) / components_norm)
+	if dim == 0:
+		mask = ellipse <= 1
+	else:
+		mask = np.sum(ellipse, axis=-1) <= 1
 	return mask
 
 def pdf(x, mu=0, sigma=[1], gamma=[0], epsilon=[np.inf]):
@@ -76,21 +80,20 @@ def pdf(x, mu=0, sigma=[1], gamma=[0], epsilon=[np.inf]):
 	epsilon: distribution cutoff (default np.inf)
 	'''
 	x, mu, sigma, gamma, epsilon = array(x, mu, sigma, gamma, epsilon)
-	dim = checkDimensionality(mu)
+	dim = checkDimensionality(x, mu)
 	param_dim = checkDimensionality(sigma, gamma, epsilon)
-	x_dim = checkDimensionality(x)
-	if x_dim - dim != 1 or param_dim - dim != 1:
+	if param_dim - dim != 1:
 		raise ValueError("Arguments must have correct relative dimensions")
 	gamma_norm = np.linalg.norm(gamma, axis=-1)
-	sigma_norm = np.linalg.norm(sigma, axis=-1)
-	k_gauss = np.sqrt(2 * np.pi * sigma_norm)
+	sigma = sigma.reshape((param_dim, param_dim))
+	k_gauss = np.sqrt(2 * np.pi * np.linalg.det(sigma))
 	h = 1 / (1 + 2 * gamma_norm / k_gauss)
 	k = h / k_gauss
-	g = np.exp(-0.5 * sigma_norm * np.square((x - mu - gamma_norm)))
+	g = np.exp(-0.5 * np.linalg.norm(sigma, axis=-1) * np.square((x - mu - gamma_norm)))
 	out = np.zeros(len(x))
-	mask = withinEllipsoid(dim, mu, gamma, x)
+	mask = withinEllipsoid(mu, gamma, x)
 	inverted_mask = np.invert(mask)
-	cutoff_mask = withinEllipsoid(dim, mu, epsilon, x)
+	cutoff_mask = np.invert(withinEllipsoid(mu, epsilon, x))
 	out[mask] = k
 	out[inverted_mask] = k * g
 	out[cutoff_mask] = 0
