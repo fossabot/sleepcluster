@@ -108,7 +108,7 @@ class DSIGCluster(cluster.Cluster):
 		def __init__(self, gamma, sigma, epsilon, delta):
 			self.cores = []
 
-	class CorePoint:
+	class Core:
 
 		def __init__(self, mu, cluster):
 			self.mu = mu
@@ -122,7 +122,7 @@ class DSIGCluster(cluster.Cluster):
 
 	def __init__(self, n_clusters=None, n_cores=50, max_e=np.inf, n_init=10, max_iter=200,
 					tol=1e-4, noise=False, seed=None):
-		self.fluid = False if n_clusters is None else True
+		self.fluid = True if n_clusters is None else False
 		self.n_clusters = n_cores if n_clusters is None else n_clusters
 		self.n_cores = n_cores
 		self.max_e = max_e
