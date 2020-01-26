@@ -1,7 +1,6 @@
 import numpy as np
 from tqdm import tqdm
 from sklearn.datasets import make_spd_matrix
-from scipy.stats import multivariate_normal as mvn
 import math
 
 from lib import data as dataLib
@@ -121,9 +120,11 @@ class DSIGCluster(cluster.Cluster):
 			self.cluster = cluster
 
 
-	def __init__(self, n_clusters=None, max_e=np.inf, n_init=10, max_iter=200,
+	def __init__(self, n_clusters=None, n_cores=50, max_e=np.inf, n_init=10, max_iter=200,
 					tol=1e-4, noise=False, seed=None):
-		self.n_clusters = n_clusters
+		self.fluid = False if n_clusters is None else True
+		self.n_clusters = n_cores if n_clusters is None else n_clusters
+		self.n_cores = n_cores
 		self.max_e = max_e
 		self.n_init = n_init
 		self.max_iter = max_iter
@@ -131,7 +132,7 @@ class DSIGCluster(cluster.Cluster):
 		self.noise = noise
 		self.seed = seed
 		self.clusters = []
-		self.core_points = []
+		self.cores = []
 
 	def initializeCores(self):
 		'''
@@ -140,23 +141,27 @@ class DSIGCluster(cluster.Cluster):
 		'''
 		pass
 
-	def expectation(self):
+	def expectation(self, x):
+		post = []
+		for core in self.cores:
+			mu = core.mu
+			sigma = core.cluster.sigma
+			gamma = core.cluster.gamma
+			epsilon = core.cluster.epsilon
+			likelihoods.append(pdf(x=x, mu=mu, sigma=sigma, gamma=gamma, epsilon=epsilon))
+		post = np.array(post)
+		if post.shape != (len(self.cores), len(x)):
+			raise RuntimeError("Expectation Step found erroneous shape")
+		return post
 
-		pass
-
-	def inertia(self, core_point):
-		'''
-		The aim is to minimize inertia
-		Per core point:
-			Follow GMM inertia measurement
-			REMEMBER: it is not completely normal distribution (gamma, epsilon modulate it)
-		'''
-		inertia = np.inf
-
-		mu = core_point.mu
-		sigma = core_point.cluster.sigma
-
-		return inertia
+	def maximization(self, post, x):
+		for p, c in zip(post, self.cores):
+			delta = c.cluster.delta
+			b = (p * delta) / (np.sum([p * delta for i in range(self.n_cores)], axis=0) + 1e-8)
+			c.cluster.mu = np.sum(b.reshape(len(x), 1) * x, axis=0) / np.sum(b + 1e-8)
+			c.cluster.sigma = np.dot((b.reshape(len(x), 1) * (x - c.cluster.mu)).T,
+										(x - c.cluster.mu)) / np.sum(b + 1e-8)
+			c.cluster.delta = np.mean(b)
 
 	def calculateDissociation(self, core_point):
 		'''
@@ -214,7 +219,7 @@ class DSIGCluster(cluster.Cluster):
 				gamma - falloff point (when the normal distribution begins)
 				sigma - variance (sharpness of the falloff)
 				epsilon - outer cutoff limit
-				delta - peak density (within gamma range)
+				delta - peak density (within gamma range) (this is weight in GMM)
 			A cluster is considered to be overall some gaussian mixture
 			This results in clusters that can be irregularly shaped,
 				vary in density between each other, and thus overlap
