@@ -106,16 +106,16 @@ class DSIGCluster(cluster.Cluster):
 	class CoreCluster:
 
 		def __init__(self, gamma, sigma, epsilon, delta):
-			self.gamma = gamma
-			self.sigma = sigma
-			self.epsilon = epsilon
-			self.delta = delta
 			self.cores = []
 
 	class CorePoint:
 
 		def __init__(self, mu, cluster):
 			self.mu = mu
+			self.gamma = gamma
+			self.sigma = sigma
+			self.epsilon = epsilon
+			self.delta = delta
 			self.points = []
 			self.cluster = cluster
 
@@ -144,11 +144,8 @@ class DSIGCluster(cluster.Cluster):
 	def expectation(self, x):
 		post = []
 		for core in self.cores:
-			mu = core.mu
-			sigma = core.cluster.sigma
-			gamma = core.cluster.gamma
-			epsilon = core.cluster.epsilon
-			likelihoods.append(pdf(x=x, mu=mu, sigma=sigma, gamma=gamma, epsilon=epsilon))
+			m, s, g, e = core.mu, core.sigma, core.gamma, core.epsilon
+			likelihoods.append(pdf(x=x, mu=m, sigma=s, gamma=g, epsilon=e))
 		post = np.array(post)
 		if post.shape != (len(self.cores), len(x)):
 			raise RuntimeError("Expectation Step found erroneous shape")
@@ -156,12 +153,11 @@ class DSIGCluster(cluster.Cluster):
 
 	def maximization(self, post, x):
 		for p, c in zip(post, self.cores):
-			delta = c.cluster.delta
-			b = (p * delta) / (np.sum([p * delta for i in range(self.n_cores)], axis=0) + 1e-8)
-			c.cluster.mu = np.sum(b.reshape(len(x), 1) * x, axis=0) / np.sum(b + 1e-8)
-			c.cluster.sigma = np.dot((b.reshape(len(x), 1) * (x - c.cluster.mu)).T,
+			b = (p * delta) / (np.sum([p * c.delta for i in range(self.n_cores)], axis=0) + 1e-8)
+			c.mu = np.sum(b.reshape(len(x), 1) * x, axis=0) / np.sum(b + 1e-8)
+			c.sigma = np.dot((b.reshape(len(x), 1) * (x - c.cluster.mu)).T,
 										(x - c.cluster.mu)) / np.sum(b + 1e-8)
-			c.cluster.delta = np.mean(b)
+			c.delta = np.mean(b)
 
 	def calculateDissociation(self, core_point):
 		'''
