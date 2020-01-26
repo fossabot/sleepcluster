@@ -68,7 +68,7 @@ def withinEllipsoid(center, components, points):
 		mask = np.sum(ellipse, axis=-1) <= 1
 	return mask
 
-def pdf(x, mu=0, sigma=[1], gamma=[0], epsilon=[np.inf]):
+def pdf(x, mu=0, gamma=[0], sigma=[1], epsilon=[np.inf]):
 	'''
 	Calculate probability density function of
 		a modified multivariate normal distribution
@@ -105,18 +105,17 @@ class DSIGCluster(cluster.Cluster):
 
 	class CoreCluster:
 
-		def __init__(self, gamma, sigma, epsilon, delta):
+		def __init__(self, cores=[]):
 			self.cores = []
 
 	class Core:
 
-		def __init__(self, mu, cluster):
+		def __init__(self, mu=0, gamma=[0], sigma=[1], epsilon=[np.inf], delta=1, cluster=None):
 			self.mu = mu
 			self.gamma = gamma
 			self.sigma = sigma
 			self.epsilon = epsilon
 			self.delta = delta
-			self.points = []
 			self.cluster = cluster
 
 
@@ -145,7 +144,7 @@ class DSIGCluster(cluster.Cluster):
 		post = []
 		for core in self.cores:
 			m, s, g, e = core.mu, core.sigma, core.gamma, core.epsilon
-			likelihoods.append(pdf(x=x, mu=m, sigma=s, gamma=g, epsilon=e))
+			post.append(pdf(x=x, mu=m, sigma=s, gamma=g, epsilon=e))
 		post = np.array(post)
 		if post.shape != (len(self.cores), len(x)):
 			raise RuntimeError("Expectation Step found erroneous shape")
