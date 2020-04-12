@@ -11,3 +11,5 @@
 
 # Development and Testing
 **/.coverage
+/data/
+/datasets/
