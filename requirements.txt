@@ -1,0 +1,6 @@
+scipy
+sklearn
+numpy
+dsigm
+xlrd
+xlwt
