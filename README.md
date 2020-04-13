@@ -1,4 +1,6 @@
 ## SleepCluster
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fparadoxysm%2Fsleepcluster.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fparadoxysm%2Fsleepcluster?ref=badge_shield)
+
 
 ## Overview
 
@@ -48,3 +50,7 @@ Documentation for `sleepcluster` can be found [here](https://github.com/paradoxy
 ### Issues and Questions
 
 Issues and Questions should be posed to the issue tracker [here](https://github.com/paradoxysm/sleepcluster/issues).
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fparadoxysm%2Fsleepcluster.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fparadoxysm%2Fsleepcluster?ref=badge_large)
